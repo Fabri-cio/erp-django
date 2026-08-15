@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.contrib.auth.password_validation import validate_password
 from .models import Usuario
 
 class UsuarioSerializer(serializers.ModelSerializer):
@@ -25,6 +26,11 @@ class UsuarioSerializer(serializers.ModelSerializer):
             'last_login',
             'date_joined',
         ]
+
+    # Validar contraseña 
+    def validate_password(self, value):
+        validate_password(value)
+        return value
 
     # Crear usuario
     def create(self, validated_data):
