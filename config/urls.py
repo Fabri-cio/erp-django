@@ -23,10 +23,10 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 
     # Usuarios
-    path('api/', include('apps.usuarios.urls')),
+    path('api/usuarios/', include('apps.usuarios.urls')),
 
     # Roles
-    path('api/', include('apps.roles.urls')),
+    path('api/roles/', include('apps.roles.urls')),
 
     # JWT Authentication
     path('api/auth/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),

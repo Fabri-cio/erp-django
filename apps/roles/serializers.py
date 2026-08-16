@@ -14,3 +14,10 @@ class RoleSerializer(serializers.ModelSerializer):
         read_only_fields = [
             'id',
         ]
+
+# Serializer para asignar un rol a un usuario
+class AssignRoleSerializer(serializers.Serializer):
+    role_id = serializers.PrimaryKeyRelatedField(
+        queryset=Group.objects.all(),
+        source="role",
+    )
