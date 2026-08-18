@@ -15,9 +15,10 @@ class RoleSerializer(serializers.ModelSerializer):
             'id',
         ]
 
-# Serializer para asignar un rol a un usuario
-class AssignRoleSerializer(serializers.Serializer):
-    role_id = serializers.PrimaryKeyRelatedField(
+# Serializer para gestionar roles (obtener, asignar y eliminar por id de usuario)
+class GestionarRolesSerializer(serializers.Serializer):
+
+    role_ids = serializers.PrimaryKeyRelatedField(
         queryset=Group.objects.all(),
-        source="role",
+        many=True,
     )
