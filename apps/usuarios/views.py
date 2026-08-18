@@ -6,8 +6,10 @@ from drf_spectacular.utils import extend_schema
 
 from django.contrib.auth import get_user_model
 
+from apps.usuarios.permissions import UsuarioPermission
+
 from .serializers import UsuarioSerializer
-from apps.roles.serializers import GestionarRolesSerializer, RoleSerializer
+from apps.roles.serializers import GestionarPermisosSerializer, GestionarRolesSerializer, PermissionSerializer, RoleSerializer
 
 Usuario = get_user_model()
 
@@ -15,7 +17,7 @@ Usuario = get_user_model()
 class UsuarioViewSet(viewsets.ModelViewSet):
     queryset = Usuario.objects.all()
     serializer_class = UsuarioSerializer
-    # permission_classes = [UsuarioPermission]
+    permission_classes = [UsuarioPermission]
 
 # Vista para gestionar roles de usuarios
 class GestionarRolesUsuarioView(APIView):
@@ -194,6 +196,214 @@ class GestionarRolesUsuarioView(APIView):
                 "user_id": usuario.id,
                 "roles": RoleSerializer(
                     roles,
+                    many=True,
+                ).data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+# Vista para gestionar permisos de un usuario
+class GestionarPermisosUsuarioView(APIView):
+
+    # Obtener permisos directos de un usuario
+    @extend_schema(
+        responses=PermissionSerializer(many=True),
+    )
+    def get(self, request, user_id):
+
+        try:
+            usuario = Usuario.objects.get(
+                id=user_id
+            )
+
+        except Usuario.DoesNotExist:
+
+            return Response(
+                {
+                    "detail": "Usuario no encontrado."
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        permisos = usuario.user_permissions.all()
+
+        serializer = PermissionSerializer(
+            permisos,
+            many=True,
+        )
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
+        )
+
+    # Agregar uno o varios permisos
+    @extend_schema(
+        request=GestionarPermisosSerializer,
+        responses={200: None},
+    )
+    def post(self, request, user_id):
+
+        try:
+            usuario = Usuario.objects.get(
+                id=user_id
+            )
+
+        except Usuario.DoesNotExist:
+
+            return Response(
+                {
+                    "detail": "Usuario no encontrado."
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        serializer = GestionarPermisosSerializer(
+            data=request.data
+        )
+
+        serializer.is_valid(
+            raise_exception=True
+        )
+
+        permisos = serializer.validated_data[
+            "permission_ids"
+        ]
+
+        usuario.user_permissions.add(
+            *permisos
+        )
+
+        return Response(
+            {
+                "detail": (
+                    "Permisos asignados correctamente."
+                ),
+                "user_id": usuario.id,
+                "permissions": PermissionSerializer(
+                    permisos,
+                    many=True,
+                ).data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    # Reemplazar todos los permisos directos
+    @extend_schema(
+        request=GestionarPermisosSerializer,
+        responses={200: None},
+    )
+    def put(self, request, user_id):
+
+        try:
+            usuario = Usuario.objects.get(
+                id=user_id
+            )
+
+        except Usuario.DoesNotExist:
+
+            return Response(
+                {
+                    "detail": "Usuario no encontrado."
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        serializer = GestionarPermisosSerializer(
+            data=request.data
+        )
+
+        serializer.is_valid(
+            raise_exception=True
+        )
+
+        permisos = serializer.validated_data[
+            "permission_ids"
+        ]
+
+        usuario.user_permissions.set(
+            permisos
+        )
+
+        return Response(
+            {
+                "detail": (
+                    "Permisos actualizados correctamente."
+                ),
+                "user_id": usuario.id,
+                "permissions": PermissionSerializer(
+                    permisos,
+                    many=True,
+                ).data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    # Eliminar uno o varios permisos
+    @extend_schema(
+        request=GestionarPermisosSerializer,
+        responses={200: None},
+    )
+    def delete(self, request, user_id):
+
+        try:
+            usuario = Usuario.objects.get(
+                id=user_id
+            )
+
+        except Usuario.DoesNotExist:
+
+            return Response(
+                {
+                    "detail": "Usuario no encontrado."
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        serializer = GestionarPermisosSerializer(
+            data=request.data
+        )
+
+        serializer.is_valid(
+            raise_exception=True
+        )
+
+        permisos = serializer.validated_data[
+            "permission_ids"
+        ]
+
+        permisos_no_asignados = [
+            permission
+            for permission in permisos
+            if not usuario.user_permissions.filter(
+                id=permission.id
+            ).exists()
+        ]
+
+        if permisos_no_asignados:
+
+            return Response(
+                {
+                    "detail": (
+                        "Uno o más permisos no están "
+                        "asignados directamente al usuario."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        usuario.user_permissions.remove(
+            *permisos
+        )
+
+        return Response(
+            {
+                "detail": (
+                    "Permisos eliminados correctamente."
+                ),
+                "user_id": usuario.id,
+                "permissions": PermissionSerializer(
+                    permisos,
                     many=True,
                 ).data,
             },
