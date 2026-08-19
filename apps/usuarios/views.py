@@ -8,7 +8,7 @@ from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.contrib.auth.models import Permission
 
-from apps.usuarios.permissions import UsuarioPermission
+from apps.usuarios.permissions import GestionarPermisosUsuarioPermission, GestionarRolesUsuarioPermission, PermisosEfectivosUsuarioPermission, UsuarioPermission
 
 from .serializers import UsuarioSerializer
 from apps.roles.serializers import GestionarPermisosSerializer, GestionarRolesSerializer, PermissionSerializer, RoleSerializer
@@ -23,6 +23,9 @@ class UsuarioViewSet(viewsets.ModelViewSet):
 
 # Vista para gestionar roles de usuarios
 class GestionarRolesUsuarioView(APIView):
+
+    # Permisos necesarios para acceder a esta vista
+    permission_classes = [GestionarRolesUsuarioPermission]
 
     # Obtener los roles de un usuario
     @extend_schema(
@@ -206,6 +209,8 @@ class GestionarRolesUsuarioView(APIView):
 
 # Vista para gestionar permisos de un usuario
 class GestionarPermisosUsuarioView(APIView):
+    # Permisos basados en el modelo Usuario
+    permission_classes = [GestionarPermisosUsuarioPermission]
 
     # Obtener permisos directos de un usuario
     @extend_schema(
@@ -414,6 +419,9 @@ class GestionarPermisosUsuarioView(APIView):
 
 # Vista para consultar permisos efectivos de un usuario
 class PermisosEfectivosUsuarioView(APIView):
+
+    # Permisos necesarios para acceder a esta vista
+    permission_classes = [PermisosEfectivosUsuarioPermission]
 
     @extend_schema(
         responses=PermissionSerializer(many=True),
