@@ -5,6 +5,8 @@ from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema
 
 from django.contrib.auth import get_user_model
+from django.db.models import Q
+from django.contrib.auth.models import Permission
 
 from apps.usuarios.permissions import UsuarioPermission
 
@@ -410,3 +412,59 @@ class GestionarPermisosUsuarioView(APIView):
             status=status.HTTP_200_OK,
         )
 
+# Vista para consultar permisos efectivos de un usuario
+class PermisosEfectivosUsuarioView(APIView):
+
+    @extend_schema(
+        responses=PermissionSerializer(many=True),
+    )
+    def get(self, request, user_id):
+
+        try:
+            usuario = Usuario.objects.get(
+                id=user_id
+            )
+
+        except Usuario.DoesNotExist:
+
+            return Response(
+                {
+                    "detail": "Usuario no encontrado."
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Permisos directos del usuario
+        permisos_directos = usuario.user_permissions.all()
+
+        # Permisos heredados de los roles
+        permisos_roles = Permission.objects.filter(
+            group__user=usuario
+        )
+
+        # Unir permisos directos + permisos de roles
+        permisos_efectivos = Permission.objects.filter(
+            Q(
+                id__in=permisos_directos.values_list(
+                    "id",
+                    flat=True,
+                )
+            )
+            |
+            Q(
+                id__in=permisos_roles.values_list(
+                    "id",
+                    flat=True,
+                )
+            )
+        ).distinct()
+
+        serializer = PermissionSerializer(
+            permisos_efectivos,
+            many=True,
+        )
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
+        )

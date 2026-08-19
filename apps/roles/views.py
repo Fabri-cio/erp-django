@@ -6,11 +6,12 @@ from rest_framework import status
 from drf_spectacular.utils import extend_schema
 
 from .serializers import RoleSerializer, PermissionSerializer, GestionarPermisosSerializer
+from .permissions import RolPermission
 
 class RoleViewSet(viewsets.ModelViewSet):
     queryset = Group.objects.all()
     serializer_class = RoleSerializer
-    # permission_classes = [RolPermission] # Permisos personalizados
+    permission_classes = [RolPermission] # Permisos personalizados
 
 # Vista para gestionar permisos de un rol
 class GestionarPermisosRolView(APIView):

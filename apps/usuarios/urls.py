@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
-from .views import UsuarioViewSet, GestionarRolesUsuarioView, GestionarPermisosUsuarioView
+from .views import UsuarioViewSet, GestionarRolesUsuarioView, GestionarPermisosUsuarioView, PermisosEfectivosUsuarioView
 
 
 router = DefaultRouter()
@@ -16,5 +16,8 @@ urlpatterns = [
     
     # Consultar, asignar y eliminar permisos de un usuario
     path('<int:user_id>/permisos/', GestionarPermisosUsuarioView.as_view(), name='gestionar-permisos-usuario'),
+
+    # Consultar permisos efectivos de un usuario
+    path('<int:user_id>/permisos-efectivos/', PermisosEfectivosUsuarioView.as_view(), name='permisos-efectivos-usuario'),
 
 ]
