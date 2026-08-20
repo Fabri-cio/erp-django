@@ -54,3 +54,59 @@ class UsuarioSerializer(serializers.ModelSerializer):
         
         instance.save()
         return instance
+
+# Serializer para cambiar contraseña
+class CambiarPasswordSerializer(serializers.Serializer):
+    
+    password_actual = serializers.CharField(
+        write_only=True,
+        required=True
+    )
+
+    password_nueva = serializers.CharField(
+        write_only=True,
+        required=True
+    )
+
+    password_nueva_confirmacion = serializers.CharField(
+        write_only=True,
+        required=True
+    )
+
+    # Validar contraseña
+    def validate(self, attrs):
+        
+        usuario = self.context['request'].user
+        
+        # Verificar contraseña actual
+        if not usuario.check_password(
+            attrs["password_actual"]
+        ):
+            raise serializers.ValidationError(
+                {
+                    "password_actual": (
+                        "La contraseña actual es incorrecta."
+                    )
+                }
+            )
+
+        # Confirmar nueva contraseña
+        if (
+            attrs["password_nueva"]
+            != attrs["password_nueva_confirmacion"]
+        ):
+            raise serializers.ValidationError(
+                {
+                    "password_nueva_confirmacion": (
+                        "Las contraseñas nuevas no coinciden."
+                    )
+                }
+            )
+
+        # Ejecutar validadores de contraseña de Django
+        validate_password(
+            attrs["password_nueva"],
+            usuario,
+        )
+
+        return attrs

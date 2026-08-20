@@ -1,16 +1,17 @@
 from rest_framework import viewsets, status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
 from drf_spectacular.utils import extend_schema
 
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, update_session_auth_hash
 from django.db.models import Q
 from django.contrib.auth.models import Permission
 
 from apps.usuarios.permissions import GestionarPermisosUsuarioPermission, GestionarRolesUsuarioPermission, PermisosEfectivosUsuarioPermission, UsuarioPermission
 
-from .serializers import UsuarioSerializer
+from .serializers import CambiarPasswordSerializer, UsuarioSerializer
 from apps.roles.serializers import GestionarPermisosSerializer, GestionarRolesSerializer, PermissionSerializer, RoleSerializer
 
 Usuario = get_user_model()
@@ -474,5 +475,62 @@ class PermisosEfectivosUsuarioView(APIView):
 
         return Response(
             serializer.data,
+            status=status.HTTP_200_OK,
+        )
+
+# Vista para cambiar contraseña
+class CambiarPasswordView(APIView):
+
+    permission_classes = [
+        IsAuthenticated
+    ]
+
+    @extend_schema(
+        request=CambiarPasswordSerializer,
+        responses={
+            200: None,
+        },
+    )
+    def post(self, request):
+
+        serializer = CambiarPasswordSerializer(
+            data=request.data,
+            context={
+                "request": request
+            },
+        )
+
+        serializer.is_valid(
+            raise_exception=True
+        )
+
+        usuario = request.user
+
+        usuario.set_password(
+            serializer.validated_data[
+                "password_nueva"
+            ]
+        )
+
+        usuario.save(
+            update_fields=[
+                "password"
+            ]
+        )
+
+        # Mantener la sesión actual válida cuando
+        # se utiliza autenticación basada en sesión.
+        update_session_auth_hash(
+            request,
+            usuario,
+        )
+
+        return Response(
+            {
+                "detail": (
+                    "Contraseña actualizada "
+                    "correctamente."
+                )
+            },
             status=status.HTTP_200_OK,
         )

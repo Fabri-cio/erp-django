@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
-from .views import UsuarioViewSet, GestionarRolesUsuarioView, GestionarPermisosUsuarioView, PermisosEfectivosUsuarioView
+from .views import UsuarioViewSet, GestionarRolesUsuarioView, GestionarPermisosUsuarioView, PermisosEfectivosUsuarioView, CambiarPasswordView
 
 
 router = DefaultRouter()
@@ -9,7 +9,9 @@ router = DefaultRouter()
 router.register("", UsuarioViewSet, basename="usuarios")
 
 urlpatterns = [
-    path('', include(router.urls)),
+
+    # Cambiar contraseña
+    path('cambiar-password/', CambiarPasswordView.as_view(), name='cambiar-password'),
     
     # Consultar, asignar y eliminar roles de un usuario
     path('<int:user_id>/roles/', GestionarRolesUsuarioView.as_view(), name='gestionar-roles-usuario'),
@@ -20,4 +22,6 @@ urlpatterns = [
     # Consultar permisos efectivos de un usuario
     path('<int:user_id>/permisos-efectivos/', PermisosEfectivosUsuarioView.as_view(), name='permisos-efectivos-usuario'),
 
+    # URLs del viewset
+    path('', include(router.urls)),
 ]
