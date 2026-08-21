@@ -137,12 +137,12 @@ STATIC_URL = 'static/'
 
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
+# Durante desarrollo los correos se muestran en la consola
+EMAIL_BACKEND = (
+    "django.core.mail.backends.console.EmailBackend"
+)
 
-MAILERS = {
-    'default': {
-        'BACKEND': 'django.core.mail.backends.console.EmailBackend',
-    },
-}
+DEFAULT_FROM_EMAIL = "no-reply@erp.local"
 
 # User model: le decimos a Django que use nuestro modelo de usuario personalizado
 AUTH_USER_MODEL = "usuarios.Usuario"
