@@ -9,9 +9,9 @@ from django.contrib.auth import get_user_model, update_session_auth_hash
 from django.db.models import Q
 from django.contrib.auth.models import Permission
 
-from apps.usuarios.permissions import GestionarPermisosUsuarioPermission, GestionarRolesUsuarioPermission, PermisosEfectivosUsuarioPermission, UsuarioPermission
+from apps.usuarios.permissions import CambiarEstadoUsuarioPermission, GestionarPermisosUsuarioPermission, GestionarRolesUsuarioPermission, PermisosEfectivosUsuarioPermission, UsuarioPermission
 
-from .serializers import CambiarPasswordSerializer, UsuarioSerializer
+from .serializers import CambiarEstadoUsuarioSerializer, CambiarPasswordSerializer, UsuarioSerializer
 from apps.roles.serializers import GestionarPermisosSerializer, GestionarRolesSerializer, PermissionSerializer, RoleSerializer
 
 Usuario = get_user_model()
@@ -531,6 +531,65 @@ class CambiarPasswordView(APIView):
                     "Contraseña actualizada "
                     "correctamente."
                 )
+            },
+            status=status.HTTP_200_OK,
+        )
+
+# Vista para cambiar estado de usuario
+class CambiarEstadoUsuarioView(APIView):
+
+    permission_classes = [
+        CambiarEstadoUsuarioPermission,
+    ]
+
+    @extend_schema(
+        request=CambiarEstadoUsuarioSerializer,
+        responses={
+            200: None,
+        },
+    )
+    def patch(self, request, user_id):
+
+        try:
+            usuario = Usuario.objects.get(
+                id=user_id
+            )
+
+        except Usuario.DoesNotExist:
+
+            return Response(
+                {
+                    "detail": "Usuario no encontrado."
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        serializer = CambiarEstadoUsuarioSerializer(
+            data=request.data
+        )
+
+        serializer.is_valid(
+            raise_exception=True
+        )
+
+        usuario.is_active = serializer.validated_data[
+            "is_active"
+        ]
+
+        usuario.save(
+            update_fields=[
+                "is_active"
+            ]
+        )
+
+        return Response(
+            {
+                "detail": (
+                    "Estado del usuario actualizado "
+                    "correctamente."
+                ),
+                "user_id": usuario.id,
+                "is_active": usuario.is_active,
             },
             status=status.HTTP_200_OK,
         )

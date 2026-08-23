@@ -2,6 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 from .models import Usuario
 
+# Serializer para usuarios
 class UsuarioSerializer(serializers.ModelSerializer):
     # Campo password solo para escritura
     password = serializers.CharField(write_only=True)
@@ -110,3 +111,10 @@ class CambiarPasswordSerializer(serializers.Serializer):
         )
 
         return attrs
+
+# Serializer para cambiar estado de usuario
+class CambiarEstadoUsuarioSerializer(serializers.Serializer):
+
+    is_active = serializers.BooleanField(
+        required=True
+    )
