@@ -6,10 +6,14 @@ from django.utils.http import urlsafe_base64_encode
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 
 from drf_spectacular.utils import extend_schema
 
-from .serializers import (PasswordResetRequestSerializer, PasswordResetConfirmSerializer)
+from .serializers import (LogoutSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer)
 
 
 # Vista para solicitar restablecimiento de contraseña
@@ -132,6 +136,188 @@ class PasswordResetConfirmView(APIView):
                     "Contraseña restablecida "
                     "correctamente."
                 )
+            },
+            status=status.HTTP_200_OK,
+        )
+
+# Vista para cerrar sesión
+class LogoutView(APIView):
+
+    authentication_classes = []
+    permission_classes = []
+
+    @extend_schema(
+        request=LogoutSerializer,
+        responses={
+            200: None,
+        },
+    )
+    def post(self, request):
+
+        serializer = LogoutSerializer(
+            data=request.data
+        )
+
+        serializer.is_valid(
+            raise_exception=True
+        )
+
+        refresh_token = serializer.validated_data[
+            "refresh"
+        ]
+
+        try:
+
+            token = RefreshToken(
+                refresh_token
+            )
+
+            token.blacklist()
+
+        except Exception:
+            return Response(
+                {
+                    "detail": (
+                        "El refresh token no es válido "
+                        "o ya fue revocado."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return Response(
+            {
+                "detail": (
+                    "Sesión cerrada correctamente."
+                )
+            },
+            status=status.HTTP_200_OK,
+        )
+
+# Consultar sesiones activas
+class SesionesUsuarioView(APIView):
+
+    permission_classes = [
+        IsAuthenticated
+    ]
+
+    @extend_schema(
+        responses={
+            200: None,
+        },
+    )
+    def get(self, request):
+
+        tokens = OutstandingToken.objects.filter(
+            user=request.user
+        ).order_by(
+            "-created_at"
+        )
+
+        sesiones = []
+
+        for token in tokens:
+
+            esta_revocado = BlacklistedToken.objects.filter(
+                token=token
+            ).exists()
+
+            sesiones.append(
+                {
+                    "id": token.id,
+                    "created_at": token.created_at,
+                    "expires_at": token.expires_at,
+                    "revocado": esta_revocado,
+                }
+            )
+
+        return Response(
+            sesiones,
+            status=status.HTTP_200_OK,
+        )
+
+
+# Cerrar una sesión específica
+class CerrarSesionView(APIView):
+
+    permission_classes = [
+        IsAuthenticated
+    ]
+
+    @extend_schema(
+        responses={
+            200: None,
+        },
+    )
+    def delete(self, request, token_id):
+
+        try:
+            token = OutstandingToken.objects.get(
+                id=token_id,
+                user=request.user,
+            )
+
+        except OutstandingToken.DoesNotExist:
+
+            return Response(
+                {
+                    "detail": (
+                        "La sesión no existe."
+                    )
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        BlacklistedToken.objects.get_or_create(
+            token=token
+        )
+
+        return Response(
+            {
+                "detail": (
+                    "Sesión cerrada correctamente."
+                )
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+# Cerrar todas las sesiones del usuario
+class CerrarTodasSesionesView(APIView):
+
+    permission_classes = [
+        IsAuthenticated
+    ]
+
+    @extend_schema(
+        responses={
+            200: None,
+        },
+    )
+    def post(self, request):
+
+        tokens = OutstandingToken.objects.filter(
+            user=request.user
+        )
+
+        contador = 0
+
+        for token in tokens:
+
+            _, creado = BlacklistedToken.objects.get_or_create(
+                token=token
+            )
+
+            if creado:
+                contador += 1
+
+        return Response(
+            {
+                "detail": (
+                    "Todas las sesiones "
+                    "fueron cerradas correctamente."
+                ),
+                "sesiones_cerradas": contador,
             },
             status=status.HTTP_200_OK,
         )

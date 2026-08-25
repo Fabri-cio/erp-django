@@ -129,3 +129,10 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         attrs["usuario"] = usuario
 
         return attrs
+        
+# Serializer para cerrar sesión
+class LogoutSerializer(serializers.Serializer):
+
+    refresh = serializers.CharField(
+        required=True
+    )
