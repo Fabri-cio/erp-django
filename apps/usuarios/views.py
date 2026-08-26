@@ -8,8 +8,11 @@ from drf_spectacular.utils import extend_schema
 from django.contrib.auth import get_user_model, update_session_auth_hash
 from django.db.models import Q
 from django.contrib.auth.models import Permission
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter, OrderingFilter
 
 from apps.usuarios.permissions import CambiarEstadoUsuarioPermission, GestionarPermisosUsuarioPermission, GestionarRolesUsuarioPermission, PermisosEfectivosUsuarioPermission, UsuarioPermission
+from apps.usuarios.pagination import PaginacionERP
 
 from .serializers import CambiarEstadoUsuarioSerializer, CambiarPasswordSerializer, UsuarioSerializer
 from apps.roles.serializers import GestionarPermisosSerializer, GestionarRolesSerializer, PermissionSerializer, RoleSerializer
@@ -21,6 +24,25 @@ class UsuarioViewSet(viewsets.ModelViewSet):
     queryset = Usuario.objects.all()
     serializer_class = UsuarioSerializer
     permission_classes = [UsuarioPermission]
+
+    # Paginación personalizada
+    pagination_class = PaginacionERP
+
+    # Herramientas de filtrado, búsqueda y ordenamiento
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+
+    # Campos para filtrar
+    filterset_fields = ["is_active"]
+
+    # Campos para buscar
+    search_fields = ["username", "email", "first_name", "last_name"]
+
+    # Campos para ordenar
+    ordering_fields = ["username", "email", "first_name", "last_name", "is_active"]
+
+    # Ordenamiento por defecto
+    ordering = ["username"]
+
 
 # Vista para gestionar roles de usuarios
 class GestionarRolesUsuarioView(APIView):
