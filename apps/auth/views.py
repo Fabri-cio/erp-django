@@ -12,8 +12,11 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 
 from drf_spectacular.utils import extend_schema
+from rest_framework_simplejwt.views import TokenObtainPairView
 
-from .serializers import (LogoutSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer)
+from apps.auditoria.models import Auditoria
+
+from .serializers import (LoginSerializer, LogoutSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer)
 
 
 # Vista para solicitar restablecimiento de contraseña
@@ -172,6 +175,11 @@ class LogoutView(APIView):
                 refresh_token
             )
 
+            # Obtener el ID del usuario para registrar la auditoría
+            usuario_id = token.get(
+                "user_id"
+            )
+
             token.blacklist()
 
         except Exception:
@@ -184,6 +192,16 @@ class LogoutView(APIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        # Registrar la auditoría
+        Auditoria.objects.create(
+            usuario_id=usuario_id,
+            accion="Cierre de sesion",
+            metodo="POST",
+            endpoint="/api/auth/logout/",
+            ip=request.META.get("REMOTE_ADDR"),
+            detalle="Logout exitoso",
+        )
 
         return Response(
             {
@@ -321,3 +339,9 @@ class CerrarTodasSesionesView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
+# Vista personalizada para login con auditoría
+class LoginView(TokenObtainPairView):
+
+    serializer_class = LoginSerializer
+

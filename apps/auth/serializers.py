@@ -4,6 +4,9 @@ from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_decode
 
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
+from apps.auditoria.models import Auditoria
 
 
 Usuario = get_user_model()
@@ -136,3 +139,40 @@ class LogoutSerializer(serializers.Serializer):
     refresh = serializers.CharField(
         required=True
     )
+
+# Serializer personalizado para login con auditoría
+class LoginSerializer(TokenObtainPairSerializer):
+
+    def validate(self, attrs):
+
+        try:
+
+            data = super().validate(attrs)
+
+        except Exception:
+
+            Auditoria.objects.create(
+                usuario=None,
+                accion="LOGIN_FALLIDO",
+                metodo="POST",
+                endpoint="/api/auth/login/",
+                ip=self.context["request"].META.get(
+                    "REMOTE_ADDR"
+                ),
+                detalle="Credenciales invalidas.",
+            )
+
+            raise
+
+        Auditoria.objects.create(
+            usuario=self.user,
+            accion="LOGIN",
+            metodo="POST",
+            endpoint="/api/auth/login/",
+            ip=self.context["request"].META.get(
+                "REMOTE_ADDR"
+            ),
+            detalle="Login exitoso.",
+        )
+
+        return data

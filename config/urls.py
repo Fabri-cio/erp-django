@@ -19,6 +19,8 @@ from django.urls import path, include
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
+from apps.auth.views import LoginView
+
 urlpatterns = [
     path('admin/', admin.site.urls),
 
@@ -32,7 +34,7 @@ urlpatterns = [
     path('api/auth/', include('apps.auth.urls')),
 
     # JWT Authentication
-    path('api/auth/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/auth/login/', LoginView.as_view(), name='token_obtain_pair'), # Login con auditoría
     path('api/auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     
     # Swagger API Documentation

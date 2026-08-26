@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     # Local apps
     'apps.usuarios',
     'apps.roles',
+    'apps.auditoria'
 ]
 
 MIDDLEWARE = [
@@ -60,6 +61,9 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+
+    'apps.auditoria.middleware.AuditoriaMiddleware', # Middleware de auditoría
+
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
