@@ -14,7 +14,12 @@ class RolPermission(BasePermission):
 
     # Verificar permisos basados en el método HTTP
     def has_permission(self, request, view):
-        # Si es superusuario, permitir acceso
+        
+        # Usuario no autenticado
+        if not request.user.is_authenticated:
+            return False
+
+        # Superusuario
         if request.user.is_superuser:
             return True
 
@@ -45,9 +50,11 @@ class GestionarPermisosRolPermission(BasePermission):
 
     def has_permission(self, request, view):
 
+        # Usuario no autenticado
         if not request.user.is_authenticated:
             return False
 
+        # Superusuario
         if request.user.is_superuser:
             return True
 

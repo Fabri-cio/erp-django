@@ -3,15 +3,47 @@ from django.contrib.auth.models import Group
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter, OrderingFilter
 from drf_spectacular.utils import extend_schema
 
 from .serializers import RoleSerializer, PermissionSerializer, GestionarPermisosSerializer
 from .permissions import RolPermission, GestionarPermisosRolPermission
+from apps.usuarios.pagination import PaginacionERP
 
 class RoleViewSet(viewsets.ModelViewSet):
     queryset = Group.objects.all()
     serializer_class = RoleSerializer
     permission_classes = [RolPermission] # Permisos personalizados
+
+    # Paginación personalizada
+    pagination_class = PaginacionERP
+
+    # Herramientas de filtrado, búsqueda y ordenamiento
+    filter_backends = [
+        DjangoFilterBackend,
+        SearchFilter,
+        OrderingFilter,
+    ]
+
+    # Campos para filtrar
+    filterset_fields = []
+
+    # Campos para buscar
+    search_fields = [
+        "name",
+    ]
+
+    # Campos permitidos para ordenar
+    ordering_fields = [
+        "name",
+        "id",
+    ]
+
+    # Ordenamiento por defecto
+    ordering = [
+        "name",
+    ]
 
 # Vista para gestionar permisos de un rol
 class GestionarPermisosRolView(APIView):
