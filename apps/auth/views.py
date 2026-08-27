@@ -232,22 +232,27 @@ class SesionesUsuarioView(APIView):
             "-created_at"
         )
 
-        sesiones = []
-
-        for token in tokens:
-
-            esta_revocado = BlacklistedToken.objects.filter(
-                token=token
-            ).exists()
-
-            sesiones.append(
-                {
-                    "id": token.id,
-                    "created_at": token.created_at,
-                    "expires_at": token.expires_at,
-                    "revocado": esta_revocado,
-                }
+        # Solucion al n+1 query
+        # Obtener los tokens revocados
+        tokens_revocados = set(
+            BlacklistedToken.objects.filter(
+                token__in=tokens
+            ).values_list(
+                "token_id",
+                flat=True,
             )
+        )
+
+        # Construir la lista de sesiones
+        sesiones = [
+            {
+                "id": token.id,
+                "created_at": token.created_at,
+                "expires_at": token.expires_at,
+                "revocado": token.id in tokens_revocados,
+            }
+            for token in tokens
+        ]
 
         return Response(
             sesiones,
