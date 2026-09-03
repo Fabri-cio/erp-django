@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'rest_framework_simplejwt.token_blacklist',
     'django_filters',
+    'corsheaders',
     
     # Local apps
     'apps.usuarios',
@@ -58,6 +59,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware', # CORS debe estar antes de SessionMiddleware
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -188,3 +190,16 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
 }
+
+# === CORS Settings ===
+# Define que aplicaciones frontend tienen permiso para realizar peticiones al backend
+CORS_ALLOWED_ORIGINS = [
+    # Vite puerto principal de desarrollo
+    "http://localhost:5173",
+    # Vite puerto secundario de desarrollo (en caso de que el principal esté ocupado)
+    "http://localhost:5174",
+    # Vite puerto principal de desarrollo (IP local)
+    "http://127.0.0.1:5173",
+    # Vite puerto secundario de desarrollo (IP local)
+    "http://127.0.0.1:5174",
+]
