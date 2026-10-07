@@ -13,6 +13,7 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 
 from apps.usuarios.permissions import CambiarEstadoUsuarioPermission, GestionarPermisosUsuarioPermission, GestionarRolesUsuarioPermission, PermisosEfectivosUsuarioPermission, UsuarioPermission
 from apps.usuarios.pagination import PaginacionERP
+from apps.usuarios.services import asignar_roles_a_usuario
 
 from .serializers import CambiarEstadoUsuarioSerializer, CambiarPasswordSerializer, UsuarioSerializer
 from apps.roles.serializers import GestionarPermisosSerializer, GestionarRolesSerializer, PermissionSerializer, RoleSerializer
@@ -23,7 +24,7 @@ Usuario = get_user_model()
 class UsuarioViewSet(viewsets.ModelViewSet):
     queryset = Usuario.objects.all()
     serializer_class = UsuarioSerializer
-    permission_classes = [UsuarioPermission]
+    # permission_classes = [UsuarioPermission]
 
     # Paginación personalizada
     pagination_class = PaginacionERP
@@ -107,7 +108,10 @@ class GestionarRolesUsuarioView(APIView):
 
         roles = serializer.validated_data["role_ids"]
 
-        usuario.groups.add(*roles)
+        # usuario.groups.add(*roles) # ya no se asigna directamente, se usa el servicio
+
+        # Asignar roles y notificar
+        asignar_roles_a_usuario(actor=request.user, usuario=usuario, roles=roles)
 
         return Response(
             {

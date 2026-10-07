@@ -33,6 +33,9 @@ urlpatterns = [
     # Password Reset
     path('api/auth/', include('apps.auth.urls')),
 
+    # Notificaciones
+    path('api/notificaciones/', include('apps.notificacion.urls')),
+
     # JWT Authentication
     path('api/auth/login/', LoginView.as_view(), name='token_obtain_pair'), # Login con auditoría
     path('api/auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),

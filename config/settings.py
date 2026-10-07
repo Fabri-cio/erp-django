@@ -50,11 +50,13 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'django_filters',
     'corsheaders',
+    'channels', # WebSocket support
     
     # Local apps
     'apps.usuarios',
     'apps.roles',
-    'apps.auditoria'
+    'apps.auditoria',
+    'apps.notificacion',
 ]
 
 MIDDLEWARE = [
@@ -88,7 +90,11 @@ TEMPLATES = [
     },
 ]
 
+# WSGI Application sirve para aplicaciones web tradicionales
 WSGI_APPLICATION = 'config.wsgi.application'
+
+# ASGI Application sirve para aplicaciones web en tiempo real (WebSockets, etc.)
+ASGI_APPLICATION = 'config.asgi.application'
 
 
 # Database
@@ -203,3 +209,16 @@ CORS_ALLOWED_ORIGINS = [
     # Vite puerto secundario de desarrollo (IP local)
     "http://127.0.0.1:5174",
 ]
+
+# === Channel Layers ===
+# Configuración para WebSockets y mensajería en tiempo real
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [
+                ("127.0.0.1", 6379),
+            ],
+        },
+    },
+}
